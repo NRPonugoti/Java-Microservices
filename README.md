@@ -11,10 +11,33 @@
 Microservices are little bit more expensive becasue we are creating different instances and diffrent instances of database as well 
 
 benfits :
-dont get singe point of failure 
-you can scal all of this seperately 
+1. dont get singe point of failure 
+2.you can scal all of this seperately 
 
 
 <img width="1532" height="776" alt="image" src="https://github.com/user-attachments/assets/a86634f0-ac66-4ca7-8404-92e9ab29b21c" />
 
 <img width="1771" height="595" alt="image" src="https://github.com/user-attachments/assets/05cc27c0-c902-4402-b490-1e61cf7778f0" />
+<img width="1675" height="777" alt="image" src="https://github.com/user-attachments/assets/3824122e-e804-4d23-bb06-c48777399d7c" />
+
+# Project Micro services Arch 
+<img width="1366" height="858" alt="image" src="https://github.com/user-attachments/assets/1a38d6a8-6f7b-4a21-8ab6-f79b53f1d6e0" />
+
+# Service Registration with Eureka 
+
+All of our microservices in a microservices environment are registered at a centralized location , Why ?
+
+suppose , we have microservices A, B, C and when they want to communicate with each other then they have to have the address of other micro services 
+(the Address or location of IP Address ) 
+<img width="1783" height="497" alt="image" src="https://github.com/user-attachments/assets/25a13052-ff84-4b1f-b4be-2ec459a86a58" />
+
+<img width="1763" height="545" alt="image" src="https://github.com/user-attachments/assets/509fa8f3-637b-4883-a4c9-bf603bd86b31" />
+<img width="1732" height="668" alt="image" src="https://github.com/user-attachments/assets/d5feadbe-6c68-47ee-b347-fa3e5089193b" />
+
+# SetUp Eureka Server 
+1. Create a Spring boot Project with Dependencies : Eureka Server ( Project Name: discovery-service)
+2. enable the Eureka Server on this Project Name: discovery-service ( go to main method of this Project , and enable eureka server using this annotation @EnableEurekaServer)
+3. we need to tell this project that dont have to register yourself as eureka client ( go to application.properties ,
+              eureka.client.register-with-eureka=false
+              eureka.client.fetch-register=false
+
