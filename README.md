@@ -41,3 +41,20 @@ suppose , we have microservices A, B, C and when they want to communicate with e
               eureka.client.register-with-eureka=false
               eureka.client.fetch-register=false
 
+# SetUp Eureka client Microservices A 
+1. go to POM.XML of Micro service A Project and add the Eureka Discovery client dependencies and this Eureka client needs to
+   Spring cloud starter dependency and alos Spring cloud depenency management needs the spring cloud version so we need to specify the spring cloud version inside the property
+2. eureka server configuration -->  then go to Application.properties
+            eureka.client.service-url.defaultZone=http://localhost:8761/eureka  ( this is location of eureka server, this is defualt server url  )
+   # configure the eureka client
+   <img width="1532" height="463" alt="image" src="https://github.com/user-attachments/assets/7e868f3c-392c-448d-80fd-dd6c05c24f3f" />
+
+
+4. Then Start the Discovery-service Application  and check it discovery service: localhost:8761
+   Then Start the Microservice A then automatically registering themselves to the eureka server
+   and if they both want to communicate to each other since they don't know about the address of both of these services what thye can do is they can come to the eureka server and get the discovery for another service and from there they can make REST API Call
+   <img width="1809" height="591" alt="image" src="https://github.com/user-attachments/assets/c006bef6-35cf-4611-8c93-a0189746d9fc" />
+
+<img width="989" height="318" alt="image" src="https://github.com/user-attachments/assets/bf70258d-010e-4984-90e5-be5182bb13a4" />
+
+   
