@@ -57,4 +57,28 @@ suppose , we have microservices A, B, C and when they want to communicate with e
 
 <img width="989" height="318" alt="image" src="https://github.com/user-attachments/assets/bf70258d-010e-4984-90e5-be5182bb13a4" />
 
+
+
+
+## Spring Cloud API Gateway 
+<img width="1203" height="681" alt="image" src="https://github.com/user-attachments/assets/7a37136f-31f0-4f79-8416-67e17418743b" />
+
+<img width="1775" height="594" alt="image" src="https://github.com/user-attachments/assets/d97de4b7-876c-4b19-9376-324db9638ef7" />
+<img width="1452" height="177" alt="image" src="https://github.com/user-attachments/assets/e04729da-8002-440c-8a9d-646055e88280" />
+
+<img width="1597" height="369" alt="image" src="https://github.com/user-attachments/assets/74d981ba-2035-4033-bdc4-2fb1e7722686" />
+<img width="831" height="450" alt="image" src="https://github.com/user-attachments/assets/09dfc07d-faaf-4b92-bc2d-589c958f8b1e" />
+
+1. Create Spring boot Project for API Gateway with eureka discovery client dependency
+2. Add the one more dependency : Gateway (Spring cloud routng) and POM.xml , Please keep this artifactID: spring-cloud-starter-gateway
+3. Spring Cloud Gateway Building Blocks
+          Spring CLoud gateway consists of 3 main building block
+                 1) Route
+                 2) Predicate   : Condition match , if condition , if requests has something  -e.g path=blah
+                      Predicates with path : - Path=/api/v1/orders/**
+                      Predicate with Methods : - Method=Get
+                      Predicate With Header :  - Header=User-Agent
    
+                 3) Filters
+5. SetUp API Gateway 
+
