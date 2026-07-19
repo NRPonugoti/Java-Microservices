@@ -73,12 +73,31 @@ suppose , we have microservices A, B, C and when they want to communicate with e
 2. Add the one more dependency : Gateway (Spring cloud routng) and POM.xml , Please keep this artifactID: spring-cloud-starter-gateway
 3. Spring Cloud Gateway Building Blocks
           Spring CLoud gateway consists of 3 main building block
+   
                  1) Route
+
+                     Think of this as destination that we want a particuler request to route . it comprises of destination                         URL  
+   
                  2) Predicate   : Condition match , if condition , if requests has something  -e.g path=blah
                       Predicates with path : - Path=/api/v1/orders/**
-                      Predicate with Methods : - Method=Get
+                      Predicate with Methods : - Method=GET , POST
                       Predicate With Header :  - Header=User-Agent
    
                  3) Filters
-5. SetUp API Gateway 
+                     by using filter we can add certain behaviour modify the request or the response
+                     for examples we can add a request header to our request
+                        filters :
+                                      - AddRequestheader=X-Request-Id,1234
+                                      - RedirectTo=302, https://youtube.com
+                                      - RemoveRequestHeader=Cookie
+                                      - AddResponseHeader=X-Response-Id, abcd 
+5. SetUp API Gateway  -Microservices A
+    <img width="469" height="360" alt="image" src="https://github.com/user-attachments/assets/b9c977c8-0ba4-4923-8d9e-30af97acd732" />
+
+   # Note : our API gateway alos uses the eureka server to find where where every service lies
+
+6. Add the eureka clinet to API Gateway prejct to register it to eureka server
+                 eureka.client.service-url.defaultZone= http://localhost:8761/eureka 
+   
+
 
