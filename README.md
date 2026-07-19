@@ -135,7 +135,7 @@ Because you only declare what API you want.
 ✅ Integrates well with Spring Boot and Spring Cloud
 
 
-Step1 :  go to Microservices A and Add the following dependency to your `pom.xml` file.
+Step1 :  go to Microservices A (inventory-service)and Add the following dependency to your `pom.xml` file.
 ```xml
 <dependency>
     <groupId>org.springframework.cloud</groupId>
@@ -181,3 +181,98 @@ Order Service
 Returns String Response
 feign client talk to eureka server and from eureka server discovery client it will find the urifor the microservice A so you dont have to define the URI here , just define the path here 
 
+
+### Enable Feign Client on Microservice A((inventory-service)
+``java
+@SpringBootApplication
+@EnableFeignClients
+public class InventoryServiceApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(InventoryServiceApplication.class, args);
+    }
+}
+```
+#### What happens internally?
+
+When the application starts:
+
+1. Spring scans for all interfaces annotated with `@FeignClient`.
+2. It generates proxy implementations for those interfaces.
+3. Registers them as Spring Beans.
+4. These beans can then be injected using `@Autowired` or constructor injection.
+
+### Startup Flow
+
+```text
+Application Starts
+        │
+        ▼
+@EnableFeignClients
+        │
+        ▼
+Scan for @FeignClient Interfaces
+        │
+        ▼
+Create Proxy Implementations
+        │
+        ▼
+Register as Spring Beans
+        │
+        ▼
+Ready to Call Other Microservices
+```
+## Use the Feign Client in the Controller
+Once the Feign client is created and enabled, inject it into your controller and use it to communicate with the `order-service`.
+```java
+@RestController
+@RequiredArgsConstructor
+public class ProductController {
+
+    private final OrdersFeignClient ordersFeignClient;
+
+    @GetMapping("/fetchOrders")
+    public String fetchFromOrdersService(HttpServletRequest httpServletRequest) {
+
+        log.info(httpServletRequest.getHeader("x-custom-header"));
+
+        return ordersFeignClient.helloOrders();
+    }
+}
+```
+## Why Use Feign Instead of RestTemplate?
+### Without Feign
+
+```java
+ServiceInstance orderService =
+        discoveryClient.getInstances("order-service").getFirst();
+
+return restClient.get()
+        .uri(orderService.getUri() + "/orders/core/helloOrders")
+        .retrieve()
+        .body(String.class);
+```
+
+You need to:
+- Discover the service.
+- Build the URL.
+- Send the HTTP request.
+- Retrieve the response.
+- Convert the response.
+
+### With Feign
+
+```java
+return ordersFeignClient.helloOrders();
+```
+
+OpenFeign handles all of the above automatically, resulting in cleaner, more maintainable code.
+
+---
+
+## Summary
+
+- Inject the Feign client into your controller.
+- Call the remote service using a simple Java method.
+- No manual HTTP request code is required.
+- OpenFeign manages service discovery, request execution, and response conversion behind the scenes.
