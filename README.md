@@ -121,8 +121,9 @@ public interface ProductClient {
 }
 ```
 Now whenever you write:
+```java
 Product product = productClient.getProduct(101L);
-
+```
 Why is it called Declarative?
 Because you only declare what API you want.
 
@@ -132,3 +133,51 @@ Because you only declare what API you want.
 ✅ Easy to maintain
 ✅ Automatically converts Java method calls into REST API calls
 ✅ Integrates well with Spring Boot and Spring Cloud
+
+
+Step1 :  go to Microservices A and Add the following dependency to your `pom.xml` file.
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+</dependency>
+```
+## Create the Feign Client Interface
+Create a new interface named `OrdersFeignClient` inside the `clients` package.
+```java
+@FeignClient(name = "order-service", path = "/orders")
+public interface OrdersFeignClient {
+
+    @GetMapping("/core/helloOrders")
+    String helloOrders();
+}
+```
+### Explanation
+
+- `@FeignClient(name = "order-service")`
+  - Specifies the name of the target microservice registered with Eureka.
+   - `path = "/orders"`
+  - Sets the base URL path for all API calls made through this client.
+
+- `@GetMapping("/core/helloOrders")`
+  - Maps the `helloOrders()` method to the `GET /orders/core/helloOrders` endpoint.
+
+- `String helloOrders();`
+  - Declares the method that calls the remote API. OpenFeign automatically generates the implementation at runtime.
+### Request Flow
+
+```
+Inventory Service
+       |
+       | helloOrders()
+       |
+       ▼
+GET /orders/core/helloOrders
+       |
+       ▼
+Order Service
+       |
+       ▼
+Returns String Response
+feign client talk to eureka server and from eureka server discovery client it will find the urifor the microservice A so you dont have to define the URI here , just define the path here 
+
