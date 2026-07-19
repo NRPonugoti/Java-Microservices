@@ -101,3 +101,34 @@ suppose , we have microservices A, B, C and when they want to communicate with e
    
 
 
+
+# Open Feign MicroServices Communication 
+
+  ## What is OpenFeign?
+
+OpenFeign is a tool that helps one microservice call another microservice without writing a lot of HTTP request code.
+Spring Cloud OpenFeign is a declarative REST client that allows one microservice to call another by simply defining a Java interface, eliminating the need to write manual HTTP request code
+ With OpenFeign
+
+ you simply create an interface.
+ ```java 
+@FeignClient(name = "product-service")
+public interface ProductClient {
+
+    @GetMapping("/products/{id}")
+    Product getProduct(@PathVariable Long id);
+
+}
+```
+Now whenever you write:
+Product product = productClient.getProduct(101L);
+
+Why is it called Declarative?
+Because you only declare what API you want.
+
+## Main Advantages :
+✅ Less boilerplate code
+✅ Easy to read
+✅ Easy to maintain
+✅ Automatically converts Java method calls into REST API calls
+✅ Integrates well with Spring Boot and Spring Cloud
