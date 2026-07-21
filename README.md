@@ -276,3 +276,67 @@ OpenFeign handles all of the above automatically, resulting in cleaner, more mai
 - Call the remote service using a simple Java method.
 - No manual HTTP request code is required.
 - OpenFeign manages service discovery, request execution, and response conversion behind the scenes.
+
+
+  # MicroServices Resilience4J
+  Resilience4J is a lightweight and standalone library for implementing resilience patterns in java application 
+it provides mechanisms to handle failures gracefully and ensure that service remain responsive under failer condition 
+that facilitates all these patterns  so that we don't have to write these patterns from scratch 
+            - Retry  [ response is an expection right then we can retry again ]
+            - Rate Limiter   [ particuler time frame only these many requests should be allowed ]
+            - Circuit Breaker 
+            - Integration with Spring boot 
+
+Order-Service Microservices : Add the Resilience4J dependency 
+``` xml
+<dependency>
+      <groupId>org.springframeworks.cloud</groupId>
+	  <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
+</dependency>
+```
+application.yml
+```yaml 
+resilience4j:
+  retry:
+    instances:
+	  inventoryRetry:
+	    maxRetryAttempts: 3
+		waitDuration: 10s
+```
+```java
+@Retry(name = "inventoryRetry", fallbackMethod = "createOrderFallback")
+public OrderRequestDto createOrder(OrderRequestDto orderRequestDto) {
+
+    log.info("Calling the createOrder method");
+
+    Double totalPrice = inventoryOpenFeignClient.reduceStocks(orderRequestDto);
+
+    Orders orders = modelMapper.map(orderRequestDto, Orders.class);
+
+    for (OrderItem orderItem : orders.getItems()) {
+        orderItem.setOrder(orders);
+    }
+
+    orders.setTotalPrice(totalPrice);
+    orders.setOrderStatus(OrderStatus.CONFIRMED);
+
+    Orders savedOrder = orderRepository.save(orders);
+
+    return modelMapper.map(savedOrder, OrderRequestDto.class);
+}
+public OrderRequestDto createOrderFallback(OrderRequestDto orderRequestDto,
+                                           Throwable throwable) {
+
+    log.error("Fallback occurred due to : {}", throwable.getMessage());
+
+    return new OrderRequestDto();
+}
+```
+### Benefits
+
+- Prevents application crashes.
+- Provides graceful degradation when dependent services are unavailable.
+- Improves system reliability.
+- Logs errors for easier debugging and monitoring.
+- Works seamlessly with Resilience4j's `@Retry` annotation.
+
