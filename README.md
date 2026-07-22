@@ -340,3 +340,275 @@ public OrderRequestDto createOrderFallback(OrderRequestDto orderRequestDto,
 - Logs errors for easier debugging and monitoring.
 - Works seamlessly with Resilience4j's `@Retry` annotation.
 
+### Rate Limiter   [ particuler time frame only these many requests should be allowed ]
+
+Rate Limiting controls how many requests are allowed within a specific period of time 
+
+### Why Do we need  Rate Limiting ?
+        - traffic spike 
+		- DDos like requesr floods 
+		- Expensive APIs 
+ 
+Rate limiting can protect incoming traffic or outgoing calls 
+``` java 
+@RateLimiter(name= "inventoryRateLimiter",fallbackMethod = "fallBackMethodReduceOrder")
+```
+application.yml
+```yaml 
+resilience4j:
+  ratelimiter:
+    configs:
+	  default:
+	    limitForPeriod: 3        # Max 10 calls in a refresh period 
+		limitRefreshPeriod: 5s  # Refresh the limit every second 
+		timeoutDuration : 1s  # Time to wait for permission before a request fails  
+```
+
+
+### Circuit Breaker  [ opposite of Retry logic ]
+
+if something is failing , do not let other call it again 
+how the circuit breaker work 
+
+if the circuit is closed then our applicaiton is working  
+if the circuit is open then our application is not working 
+so by default our circuit is closed 
+
+# Circuit Breaker & Rate Limiter using Resilience4j
+
+The Order Service uses **Resilience4j Circuit Breaker** and **Rate Limiter** to improve fault tolerance and protect downstream services (Inventory Service).
+
+---
+
+## Implementation
+
+```java
+@CircuitBreaker(
+    name = "inventoryCircuitBreaker",
+    fallbackMethod = "createOrderFallback"
+)
+@RateLimiter(
+    name = "inventoryRateLimiter",
+    fallbackMethod = "createOrderFallback"
+)
+public OrderRequestDto createOrder(OrderRequestDto orderRequestDto) {
+
+    log.info("Calling the createOrder method");
+
+    Double totalPrice = inventoryOpenFeignClient.reduceStocks(orderRequestDto);
+
+    Orders orders = modelMapper.map(orderRequestDto, Orders.class);
+
+    for (OrderItem orderItem : orders.getItems()) {
+        orderItem.setOrder(orders);
+    }
+
+    orders.setTotalPrice(totalPrice);
+    orders.setOrderStatus(OrderStatus.CONFIRMED);
+
+    Orders savedOrder = orderRepository.save(orders);
+
+    return modelMapper.map(savedOrder, OrderRequestDto.class);
+}
+```
+
+---
+
+# Fallback Method
+
+If the Inventory Service is unavailable or the rate limit is exceeded, the fallback method is automatically executed.
+
+```java
+public OrderRequestDto createOrderFallback(
+        OrderRequestDto orderRequestDto,
+        Throwable throwable) {
+
+    log.error("Fallback occurred due to : {}", throwable.getMessage());
+
+    return new OrderRequestDto();
+}
+```
+
+---
+
+# Circuit Breaker Configuration
+
+
+## application.yml
+
+```yaml
+resilience4j:
+  circuitbreaker:
+    instances:
+      inventoryCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 20s
+        permittedNumberOfCallsInHalfOpenState: 3
+        eventConsumerBufferSize: 10
+```
+
+---
+
+## Configuration Properties
+
+| Property | Value | Description |
+|----------|------:|-------------|
+| `registerHealthIndicator` | `true` | Registers the Circuit Breaker as a Spring Boot Actuator health indicator. |
+| `slidingWindowSize` | `10` | Evaluates the last 10 requests. |
+| `slidingWindowType` | `COUNT_BASED` | Uses a fixed number of requests instead of a time window. |
+| `minimumNumberOfCalls` | `10` | Requires at least 10 requests before calculating the failure rate. |
+| `failureRateThreshold` | `50%` | Opens the circuit when 50% or more of the requests fail. |
+| `waitDurationInOpenState` | `20s` | Keeps the circuit OPEN for 20 seconds before moving to HALF_OPEN. |
+| `permittedNumberOfCallsInHalfOpenState` | `3` | Allows 3 test requests while in HALF_OPEN state. |
+| `eventConsumerBufferSize` | `10` | Stores the last 10 Circuit Breaker events for monitoring. |
+
+---
+# Spring Boot Actuator Configuration
+
+Spring Boot Actuator is enabled to monitor the health and state of the Circuit Breaker.
+
+## application.yml
+
+```yaml
+management:
+  health:
+    circuitbreakers:
+      enabled: true
+
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+  endpoint:
+    health:
+      show-details: always
+```
+
+---
+
+## Actuator Configuration
+
+| Property | Description |
+|----------|-------------|
+| `management.health.circuitbreakers.enabled=true` | Includes Circuit Breaker status in the Health endpoint. |
+| `management.endpoints.web.exposure.include="*"` | Exposes all Actuator endpoints over HTTP. |
+| `management.endpoint.health.show-details=always` | Always displays detailed health information. |
+
+---
+
+
+# Circuit Breaker States
+
+### 🟢 CLOSED
+
+- Normal operating state.
+- All requests are sent to the Inventory Service.
+- Successes and failures are monitored.
+
+```
+Client
+   │
+   ▼
+Order Service
+   │
+   ▼
+Inventory Service
+```
+
+---
+
+### 🔴 OPEN
+
+- Triggered when the failure rate exceeds the configured threshold.
+- Requests are blocked immediately.
+- The fallback method is executed without calling the Inventory Service.
+
+```
+Client
+   │
+   ▼
+Order Service
+   │
+   ├───────────────X
+   │
+Fallback Method
+```
+
+---
+
+### 🟡 HALF_OPEN
+
+- Activated after the configured wait duration.
+- A limited number of requests are allowed.
+- If they succeed, the circuit closes.
+- If they fail, the circuit returns to OPEN.
+
+```
+Client
+   │
+   ▼
+Order Service
+   │
+   ▼
+Few Test Requests
+   │
+   ▼
+Inventory Service
+```
+
+---
+
+# Rate Limiter
+
+The Rate Limiter restricts the number of requests reaching the Inventory Service within a specified time period.
+
+### Benefits
+
+- Prevents API abuse.
+- Protects downstream services.
+- Avoids traffic spikes.
+- Improves application stability.
+
+---
+
+# Request Flow
+
+```text
+                Client
+                   │
+                   ▼
+            Order Service
+                   │
+       ┌───────────┴────────────┐
+       │                        │
+       ▼                        ▼
+ Rate Limiter          Circuit Breaker
+       │                        │
+       └───────────┬────────────┘
+                   ▼
+         Inventory Service
+                   │
+         Success / Failure
+                   │
+         ┌─────────┴─────────┐
+         │                   │
+         ▼                   ▼
+   Save Order         Fallback Method
+```
+
+---
+
+# Advantages
+
+- ✅ Prevents cascading failures.
+- ✅ Improves system resilience.
+- ✅ Handles downstream service outages gracefully.
+- ✅ Protects services from excessive traffic.
+- ✅ Provides automatic recovery after failures.
+- ✅ Integrates seamlessly with Spring Boot and OpenFeign.
+- ✅ Supports Spring Boot Actuator monitoring.
