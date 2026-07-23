@@ -1,0 +1,414 @@
+1. Circuit Breaker Questions
+Q1. What is a Circuit Breaker?
+
+Answer
+
+A Circuit Breaker is a design pattern that prevents repeated calls to a failing service. Instead of continuously sending requests to an unavailable service, it stops the calls temporarily and returns a fallback response.
+
+Q2. Why do we need a Circuit Breaker?
+
+Answer
+
+Without a Circuit Breaker:
+
+Every request waits for timeout.
+Threads become blocked.
+CPU usage increases.
+Other services may also fail (cascading failure).
+
+With a Circuit Breaker:
+
+Failures are detected early.
+Calls are stopped temporarily.
+The application remains responsive.
+Q3. Explain the three states of Circuit Breaker.
+State	Description
+CLOSED	Requests are allowed.
+OPEN	Requests are blocked and fallback is executed.
+HALF_OPEN	Limited requests are allowed to test recovery.
+Q4. When does the Circuit Breaker open?
+
+For your configuration:
+
+slidingWindowSize: 10
+failureRateThreshold: 50
+minimumNumberOfCalls: 10
+
+Example:
+
+10 Requests
+
+6 Failed
+4 Success
+
+Failure Rate = 60%
+
+Circuit becomes OPEN
+Q5. What happens during OPEN state?
+No request reaches Inventory Service.
+Fallback method executes immediately.
+Waits 20 seconds.
+Q6. What happens after 20 seconds?
+
+The Circuit Breaker moves to HALF_OPEN.
+
+It allows
+
+3 Requests
+
+If all succeed
+
+HALF_OPEN → CLOSED
+
+If any fail
+
+HALF_OPEN → OPEN
+Q7. What is Sliding Window?
+
+It is the number of recent requests used to calculate the failure rate.
+
+Example
+
+Sliding Window = 10
+
+Last 10 requests
+
+Success
+Failure
+Success
+Failure
+Failure
+Success
+Success
+Failure
+Failure
+Failure
+
+Failure Rate
+
+6 / 10 = 60%
+Q8. Difference between COUNT_BASED and TIME_BASED?
+
+COUNT_BASED
+
+Last 10 requests
+
+TIME_BASED
+
+Last 30 seconds
+2. Retry Questions
+Q9. What is Retry?
+
+Retry automatically retries failed requests before reporting failure.
+
+Q10. When should Retry be used?
+
+Temporary failures
+
+Network glitch
+Timeout
+Short database issue
+
+Not for
+
+Invalid input
+Validation errors
+Business logic failures
+Q11. Difference between Retry and Circuit Breaker?
+
+Retry
+
+Failure
+
+↓
+
+Retry
+↓
+
+Retry
+
+↓
+
+Retry
+↓
+
+Success
+
+Circuit Breaker
+
+Many Failures
+
+↓
+
+Open Circuit
+
+↓
+
+No Requests
+
+Retry tries again.
+
+Circuit Breaker stops calling.
+
+Q12. Can Retry and Circuit Breaker work together?
+
+Yes.
+
+Typical flow
+
+Retry
+
+↓
+
+Still Failed
+
+↓
+
+Circuit Breaker records failure
+
+↓
+
+Eventually Opens
+3. Rate Limiter Questions
+Q13. What is Rate Limiter?
+
+Limits how many requests can be processed in a given period.
+
+Example
+
+100 Requests / Minute
+
+The 101st request is rejected.
+
+Q14. Why use Rate Limiter?
+
+To
+
+Prevent abuse
+Prevent DDOS
+Protect backend services
+Q15. What happens when limit exceeds?
+
+Fallback executes
+
+or
+
+HTTP
+
+429 Too Many Requests
+4. Fallback Questions
+Q16. Why do we need fallback?
+
+Instead of crashing
+
+Inventory Down
+
+↓
+
+Fallback
+
+↓
+
+Return default response
+Q17. Why does fallback accept Throwable?
+
+Because it captures the actual failure reason.
+
+Example
+
+Timeout
+
+Connection refused
+
+Rate limit exceeded
+
+Circuit open
+5. Actuator Questions
+Q18. What is Spring Boot Actuator?
+
+Provides production monitoring endpoints.
+
+Example
+
+/actuator/health
+
+/actuator/info
+
+/actuator/metrics
+
+/actuator/env
+Q19. Why enable Health Indicator?
+
+To monitor
+
+Circuit Breaker State
+
+OPEN
+
+HALF_OPEN
+
+CLOSED
+Q20. What does
+show-details: always
+
+mean?
+
+Health endpoint shows complete information.
+
+6. OpenFeign Questions
+Q21. Why OpenFeign?
+
+Instead of writing
+
+RestTemplate
+
+or
+
+WebClient
+
+manually,
+
+OpenFeign creates REST clients automatically.
+
+Q22. What happens if Feign cannot connect?
+
+Without Resilience4j
+
+Exception
+
+With Circuit Breaker
+
+Fallback
+7. Scenario Questions
+Q23. Inventory Service is down. Explain what happens.
+
+Expected answer
+
+Order Service
+
+↓
+
+Feign calls Inventory
+
+↓
+
+Connection Timeout
+
+↓
+
+Retry
+
+↓
+
+Retry
+
+↓
+
+Retry
+
+↓
+
+Still Failed
+
+↓
+
+Circuit Breaker records failure
+
+↓
+
+Failure exceeds 50%
+
+↓
+
+Circuit Opens
+
+↓
+
+Fallback executes
+
+↓
+
+Client receives fallback response
+Q24. Why use Retry before Circuit Breaker?
+
+Because many failures are temporary.
+
+Retry gives the service another chance before the Circuit Breaker opens.
+
+Q25. Why not only Retry?
+
+If the service is completely down,
+
+Retry
+
+Retry
+
+Retry
+
+Retry
+
+Retry
+
+
+This wastes CPU and network resources.
+
+Circuit Breaker prevents repeated unnecessary requests.
+
+Q26. What happens if the service comes back online?
+OPEN
+
+↓
+
+20 Seconds
+
+↓
+
+HALF_OPEN
+
+↓
+
+3 Test Requests
+
+↓
+
+Success
+
+↓
+
+CLOSED
+8. Coding Questions
+Q27. Write a Circuit Breaker annotation.
+@CircuitBreaker(
+    name = "inventoryCircuitBreaker",
+    fallbackMethod = "createOrderFallback"
+)
+Q28. Write a Retry annotation.
+@Retry(
+    name = "inventoryRetry",
+    fallbackMethod = "createOrderFallback"
+)
+Q29. Write a Rate Limiter annotation.
+@RateLimiter(
+    name = "inventoryRateLimiter",
+    fallbackMethod = "createOrderFallback"
+)
+Q30. Write a fallback method.
+public OrderRequestDto createOrderFallback(
+        OrderRequestDto orderRequestDto,
+        Throwable throwable) {
+
+    log.error("Fallback occurred due to : {}", throwable.getMessage());
+
+    return new OrderRequestDto();
+}
+Common follow-up questions (asked by experienced interviewers)
+If both @Retry and @CircuitBreaker are applied, which one executes first?
+How would you choose a suitable failureRateThreshold?
+What is the impact of a very small slidingWindowSize versus a very large one?
+How would you monitor Circuit Breaker events in production?
+When would you use Bulkhead in addition to Circuit Breaker?
+What's the difference between RestTemplate, WebClient, and OpenFeign?
+How would you test a fallback method in a unit or integration test?
+How do you prevent exposing all Actuator endpoints in production?
+
+These questions are commonly asked in interviews for 3–10 years of Java Spring Boot Microservices experience. Since you have experience with Spring Boot, Microservices, OpenFeign, and Resilience4j, being comfortable answering these scenario-based questions will help you perform well in senior backend interviews.
