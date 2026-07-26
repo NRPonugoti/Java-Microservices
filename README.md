@@ -632,10 +632,10 @@ systems available all the time and we can make the changes on the fly as well
 Spring cloud config server which will be taking all the configuration form either a file store somewhere or may be a git repository 
 
 
-### Create the SPring boot Project: config-server with dependencies : Config Server , Eureka Discovery Client 
+### Create the SPring boot Project: config-server with dependencies : Config Server , Eureka Discovery Client , Config Cllient
     Config Cllient dependencies use for micro services to pull this configuration from the github configuration server 
       
-	   -  Application.yml in config-server proejct 
+	    Application.yml in config-server proejct 
            ``` xml 
                spring:
                   cloud:
