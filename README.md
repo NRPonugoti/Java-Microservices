@@ -612,3 +612,104 @@ The Rate Limiter restricts the number of requests reaching the Inventory Service
 - ✅ Provides automatic recovery after failures.
 - ✅ Integrates seamlessly with Spring Boot and OpenFeign.
 - ✅ Supports Spring Boot Actuator monitoring.
+
+
+
+
+# Centralized Configuration Server Using GitHub 
+<img width="1400" height="849" alt="image" src="https://github.com/user-attachments/assets/8cec8eed-f244-4a87-99bd-e7d68de18cb5" />
+
+### Why do you need config server ?
+we will have to modify those property files on each micro services then we will have to restart the microservices 
+wherever they are deployed and that's how it will work  but this is inefficient 
+
+we have a spring cloud config server somewhere and this store all the configurations that are required by all microservices 
+that we have so suppose all the property file are being managed by this particuler config server and
+if you want to modify any of the behavior inside the any of the micro services we just go there and we just modify the behavior there 
+and these microservices just simply refresh without even needing to restart the whole micro services right and that makes our microservies 
+systems available all the time and we can make the changes on the fly as well 
+
+Spring cloud config server which will be taking all the configuration form either a file store somewhere or may be a git repository 
+
+
+### Create the SPring boot Project: config-server with dependencies : Config Server , Eureka Discovery Client 
+    Config Cllient dependencies use for micro services to pull this configuration from the github configuration server 
+      
+	   -  Application.yml in config-server proejct 
+           ``` xml 
+               spring:
+                  cloud:
+                     config: 
+                       server: 
+                          git:
+                            uri: uri of repository 
+                            username:  github_username 
+                            password: access token 
+                            default-lable: master 
+
+                server:
+                    port: 8888
+				
+				-- config eureka server location 
+				eureka:
+				  client:
+				    service-url:
+					  defaultZone=http://localhost:8761/eureka
+             ``` 					
+			 
+### Create a Private Repository : `ecommerce-config-server` in Github then create a application.yml file in the root repositry 
+
+        - Our application will not pull the information from github so we will need to authorize our application to get the information 
+		   from our github server so that i am going to create a password API Tokens inside github 
+		    got to settings --> Developer Setting ---> Personal Access Token --> Fine_grainedt tokens -- generate new token 
+            Repository Permisions --> Administration READ ONLY , Content  READ ONLY 
+            Then take token and save it 
+      
+ 
+        - Create the application.property inside github proejct: `ecommerce-config-server`
+		      for eaxmple you have inventory-service microservices 
+			  create property file like inventory-service.properties inside `ecommerce-config-server`
+			  Then copy all the details from application.yml from inventory-service and move into 
+			  inventory-service.properties inside `ecommerce-config-server`
+			  
+ 
+        -  The inventory-service to pull this configuration from the github configuration server , it will have to know 
+           like from where i have to pull this infomration right for that we have to make this inventory-service as configuration client 
+		     Add the config clinet dependencies for all micor services 
+			  ```xml 
+			         <dependency>
+					      <groupId> org.springframework.cloud</groupId>
+						  <artifactId>spring-cloud-starter-config</artifactId>
+              ```
+			  
+			        application.properties of inventory-service , by default config server name is configserver 
+				``` xml 
+				       spring.config.import=configserver:http://localhost:8888
+				```
+				
+				I will keep the application.properties of `discovery-service` because inter dependency b/w `discovery-service`
+				and `config-server ` 
+		
+		-  we are dealing default profile inside our microservices architecture but if we want to define the configuration 
+		   for `Dev` environment or `Dev` Profile 
+		       create a file in github  like order-service-dev.properties
+			   
+			   Now we have defualt profile and dev profile , micro services picks up based which profile you mention inside the applicatio 
+			   first priority default profile over the dev profiles 
+			   
+			    for example default profile , we define a property [my.variable=narendra-default , my.variable1=ponugoti-default]
+				            Dev profile  , we define same property [my.variable=narendra-dev]
+							when you launch micro services with Dev profile ,it will puck the application followig properties 
+							
+							 my.variable=narendra-dev
+                             my.variable1=ponugoti-default
+		
+		-   Sometimes in all our  microservices , we have some propery soruce that are similar in all the microservices
+		    what we can do is we can define a global file which is the application.yml , all the global properties can put inside this global file 
+			and then we dont have to repeat those property sources across all the microservices  configuration file 
+			
+			
+
+ 
+ # Refresh Configuration without Restart 
+
