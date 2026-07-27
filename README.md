@@ -713,3 +713,83 @@ Spring cloud config server which will be taking all the configuration form eithe
  
  # Refresh Configuration without Restart 
 
+ Issue : we have change something inside github , lets go to order-service-dev.properties  
+ let change the my.variable=orders-github-dev to orders-github-dev222
+ after doing this then check it config server , localhost:8888/order-service/dev 
+ the value changed to orders-github-dev222 that would happen becuase every time you run this is going to pull all the latest 
+ information from the GitHub uri that's why its happen 
+ but we not getting latest value when we hit the endpoint : http://localhost:9020/orders/core/helloOrders 
+ we still getting the old value orders-github-dev , If you want to see the latest value , we want to restart the micro services 
+ 
+ so what we want to refresh our property soruce as soon as we can change something so for we have something called 
+ @RefreshScope 
+ <img width="1663" height="726" alt="image" src="https://github.com/user-attachments/assets/8e89e8ca-4d6e-4587-a685-f2cca5dff258" />
+
+ it needs actuator support so basically whats going to happen is that as soon as you change something in your configuration 
+ and your configuration server actually picks thats changes up automatically you are going to call an API that API would be provided by the actuator if you call that API for your microservices by that actuator then basically you are telling your 
+ application context to restart all the beans to basically refresh all the benas that are defined as @RefreshScope 
+ <img width="1675" height="817" alt="image" src="https://github.com/user-attachments/assets/c66cda0c-22d5-4ff6-bcd7-2109edea3306" />
+
+### Complete Flow
+             Developer
+
+Changes Git Configuration
+        │
+        ▼
+Git Repository
+        │
+        ▼
+Config Server
+        │
+        ▼
+Microservice
+        │
+        ▼
+POST /actuator/refresh
+        │
+        ▼
+Application Context
+        │
+        ▼
+Find @RefreshScope Beans
+        │
+        ▼
+Destroy Old Beans
+        │
+        ▼
+Create New Beans
+        │
+        ▼
+Latest Configuration Loaded
+
+Interview Question
+
+### Interviewer: What happens internally when /actuator/refresh is called?
+
+Answer:
+
+The Actuator refresh endpoint receives the request.
+Spring Cloud contacts the Config Server and retrieves the latest configuration.
+The Application Context identifies beans annotated with @RefreshScope.
+Those beans are destroyed and recreated.
+During recreation, the beans are injected with the latest configuration values.
+Beans without @RefreshScope are not recreated and continue using their existing configuration.
+
+
+One Important Clarification
+
+The statement:
+
+"your configuration server actually picks those changes up automatically"
+
+is only partially correct.
+
+A more accurate explanation is:
+
+The Config Server can serve the latest configuration from Git when requested.
+The microservice does not automatically refresh its beans just because Git changed.
+A refresh must be triggered, either:
+manually by calling POST /actuator/refresh, or
+automatically using Spring Cloud Bus (or another event mechanism) to broadcast refresh events to all services. Without one of these mechanisms, the running application continues using its previously loaded configuration.
+
+
