@@ -1,0 +1,27 @@
+Q2. Why do we use an API Gateway?
+Answer
+
+An API Gateway is the single entry point for all client requests in a microservices architecture.
+
+Instead of clients calling each microservice directly, they send requests to the API Gateway, which routes them to the correct service.
+Responsibilities:
+
+Request routing
+Authentication and authorization
+Rate limiting
+SSL termination
+Request aggregation
+Logging
+API versioning
+
+Benefits:
+
+Simplifies client interactions.
+Centralizes security.
+Reduces duplicated logic across services.
+
+Follow-up: How is an API Gateway different from a Load Balancer?
+
+A Load Balancer distributes traffic among multiple instances of the same service.
+An API Gateway routes traffic to different services and applies policies such as authentication and rate limiting.
+
