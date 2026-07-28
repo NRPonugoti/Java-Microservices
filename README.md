@@ -731,7 +731,7 @@ Spring cloud config server which will be taking all the configuration form eithe
  <img width="1675" height="817" alt="image" src="https://github.com/user-attachments/assets/c66cda0c-22d5-4ff6-bcd7-2109edea3306" />
 
 ### Complete Flow
-             Developer
+    Developer
 
 Changes Git Configuration
         │
@@ -792,4 +792,8 @@ A refresh must be triggered, either:
 manually by calling POST /actuator/refresh, or
 automatically using Spring Cloud Bus (or another event mechanism) to broadcast refresh events to all services. Without one of these mechanisms, the running application continues using its previously loaded configuration.
 
+
+refresh endpoint 
+POST http://localhost:9020/orders/actuator/refresh 
+this will update the application context just the bean that are defined as refreshscpe 
 
