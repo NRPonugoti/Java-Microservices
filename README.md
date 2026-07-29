@@ -613,9 +613,37 @@ The Rate Limiter restricts the number of requests reaching the Inventory Service
 - ✅ Integrates seamlessly with Spring Boot and OpenFeign.
 - ✅ Supports Spring Boot Actuator monitoring.
 
+# Resilience4j TimeLimiter
+
+      A TimeLimiter is stops waiting for a response once a configured timeout is reached and then fall back machinism will be called 
+### Why do we need it ?
+   - Blocked Threads 
+   - Poor User Experience 
+   - Resoruce Exhaustion 
+   - Slow APIs 
+
+### Time Limiter Flow 
+<img width="533" height="161" alt="image" src="https://github.com/user-attachments/assets/9f450126-fadd-4e3c-81de-b7c786ed1488" />
 
 
+### TimeOut vs Time Limiter 
+    
+	- Now Lets say Order service is talking to inventory services and let's say inventory service is taking a lot of time 
+	Then eventually after some amount of time you may have seen the read timeout error or connection timeout error or socket timeout error 
+	so those errors will come over here 
+	<img width="826" height="310" alt="image" src="https://github.com/user-attachments/assets/9adb77e1-3059-49ca-821c-79890a1d8c98" />
 
+	HTTP Client responsible for establishing this connection and Providing the response to Order Service 
+	and this connection timeouts, read timeouts everything we can configure inside our spring boot applicaiton 
+	Socket Timeout 
+	Connection Timeout 
+	
+	all things going on inside your network layer 
+	
+	I want to stop this request the moment a time threshhold value reaches
+   I want to handle this use case in application level  so that is when we move away from network layer and go to application layer and bring in our utility 
+   which is time limiter inside order service 
+	
 # Centralized Configuration Server Using GitHub 
 <img width="1400" height="849" alt="image" src="https://github.com/user-attachments/assets/8cec8eed-f244-4a87-99bd-e7d68de18cb5" />
 
