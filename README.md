@@ -825,3 +825,32 @@ refresh endpoint
 POST http://localhost:9020/orders/actuator/refresh 
 this will update the application context just the bean that are defined as refreshscpe 
 
+
+
+# Distributed Tracing Using Zipkin and Micrometer in MicroSerivces 
+
+  it comes to building scalable applications microservices are great there is no single point of failure 
+there is separation of concern , users can work on differetn micro services thats all great 
+
+the problme is when you want to debug something and you are looking at different micro services blogs 
+suppose  user is calling a microservicesA and A calling B and B calling C , all the communication are happen via openfign 
+we want to trace the whole flow and how the flow happen and figureout the bottlenecks 
+for that we have something callled Distributed tracing 
+
+
+### Distributing Tracking 
+   basically it is used for a distributed Network API calls whenever we have a distributed system where we have multiple applications 
+   and application is spread out across different nodes inside the systems there we need distributed tracking mechanism 
+   
+ ### MicroMeter and Zipkin
+      this will be using for defining the start time and end time and trace ID, SpanID  and basically this will log everything 
+	  inside micro services 
+      
+	  Then visualize all this we have something called Zipkin 
+	  
+	  TraceID is spanning across multiple spans , One TraceID for complete request and response flow , Under One traceID we have multiple SpanID
+	  <img width="1319" height="432" alt="image" src="https://github.com/user-attachments/assets/2b580ad2-70a5-4d29-9f89-3adc5fbf2e9a" />
+
+<img width="1762" height="638" alt="image" src="https://github.com/user-attachments/assets/b959cd8b-6913-465e-b575-5933e1a786ca" />
+
+<img width="1754" height="589" alt="image" src="https://github.com/user-attachments/assets/894fa5e6-28be-49d8-947e-4a0f84e6e466" />
