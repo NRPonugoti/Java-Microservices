@@ -1082,3 +1082,35 @@ Zipkin asks: "What happened to this specific request?" (traces)
 
 
 # Centralized Logging with ELK stack 
+
+Why Centralized logging ? 
+ while zipkin is an excelent tool for distributed tracing and observing request path through microservices 
+ it doesnt offer deep log analysis . ELK stack complements tracing tool like zipkin by offering 
+ 
+ 1. Deep Log Analysis and insight across microservice 
+ 2. long term storage and power full search capabilities 
+ 3. real time monitoring and alerting 
+ 4. Centralized view of logs for easier dubugging and troubleshooting 
+ 
+ 
+ ### The ELk Stack 
+     we have multiple spring boot application all those will generate logs inside something called log file 
+	 and then we are going to configure logstash on those servers and this logstash will look at all these log files 
+	 and it will basically send all these logs to our elastic search database so that we can query this database easily 
+	 logstash would be responsible for getting an the logs and then convert them maybe we want to add certain more functionalities 
+	 with help of logstash filter so basically we can create a log configuration 
+
+
+# The ELK Stack 
+<img width="607" height="375" alt="image" src="https://github.com/user-attachments/assets/fb1d2f7f-4f1c-45ff-b1e4-9d19b50381b2" />
+
+
+
+<img width="1787" height="476" alt="image" src="https://github.com/user-attachments/assets/41265bc2-b608-4f20-a6b8-be69ac86e604" />
+
+
+
+<img width="1127" height="342" alt="image" src="https://github.com/user-attachments/assets/ddbe6115-d853-491b-a3e1-7a5ab9af802a" />
+
+
+<img width="1711" height="474" alt="image" src="https://github.com/user-attachments/assets/53ffcaed-330d-4219-945d-623b2953a867" />
