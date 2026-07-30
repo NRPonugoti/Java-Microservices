@@ -849,8 +849,236 @@ for that we have something callled Distributed tracing
 	  Then visualize all this we have something called Zipkin 
 	  
 	  TraceID is spanning across multiple spans , One TraceID for complete request and response flow , Under One traceID we have multiple SpanID
-	  <img width="1319" height="432" alt="image" src="https://github.com/user-attachments/assets/2b580ad2-70a5-4d29-9f89-3adc5fbf2e9a" />
+	  
+
+
+<img width="1319" height="432" alt="image" src="https://github.com/user-attachments/assets/2b580ad2-70a5-4d29-9f89-3adc5fbf2e9a" />
 
 <img width="1762" height="638" alt="image" src="https://github.com/user-attachments/assets/b959cd8b-6913-465e-b575-5933e1a786ca" />
 
 <img width="1754" height="589" alt="image" src="https://github.com/user-attachments/assets/894fa5e6-28be-49d8-947e-4a0f84e6e466" />
+
+What is Micrometer?
+
+Micrometer is a Java library that collects application metrics (CPU usage, memory, request count, response time, database calls, 
+JVM metrics, etc.) and sends them to monitoring tools like:
+ Prometheus
+ CloudWatch
+ ZIpKin 
+Think of Micrometer as the translator between your Spring Boot application and monitoring systems.
+Micrometer sends metrics to Prometheus because Prometheus understands metrics. Zipkin understands traces, not metrics.
+The confusion comes from the fact that Micrometer has two different capabilities in modern Spring Boot:
+
+Micrometer Metrics → for metrics (CPU, memory, request count, etc.)
+Micrometer Tracing → for distributed traces
+
+They produce different kinds of data.
+Different Data Types
+Micrometer Metrics : This is numerical time-series data.Prometheus is built specifically to store this type of information.
+Produces data like:
+CPU = 45%
+
+Memory = 2.3 GB
+
+HTTP Requests = 3500
+
+Response Time = 240 ms
+
+
+Micrometer Tracing:  Zipkin is built to store this type of information.
+Produces data like:
+Trace ID = abc123
+
+Gateway
+↓
+Order Service
+↓
+Inventory Service
+↓
+Payment Service
+↓
+Notification Service
+
+Why not send metrics to Zipkin?
+Imagine sending this to Zipkin:
+CPU = 60%
+
+Memory = 4 GB
+
+Heap = 2 GB
+Zipkin doesn't know what to do with it.
+Metrics and traces have completely different structures.
+
+With Micrometer:
+Customer
+    |
+    v
+Spring Boot Application
+        |
+   Micrometer
+        |
+        +----------------+
+        |                |
+        v                v
+ Prometheus         Grafana
+ Now you can see:
+Now you can see:
+CPU Usage = 92%
+Memory = 85%
+Response Time = 5.8 seconds
+Database Calls = 15,000/minute
+HTTP Errors = 350
+Active Users = 1,800
+
+Now the problem is easy to diagnose.
+
+What metrics does Micrometer collect?
+
+1. HTTP Request Count: You know how many users accessed your API.
+2. Response Time (Latency) 
+3. Error Count : Micrometer records this automatically.
+4. JVM Memory : If memory reaches 100%, your application may crash.
+5. CPU Usage : Now you know why requests are slow.
+6. Database Query Time : The database has become the bottleneck.
+
+
+What actually happens?
+
+Metrics Path
+Spring Boot
+     │
+Micrometer Metrics
+     │
+     ▼
+/actuator/prometheus
+     │
+     ▼
+Prometheus
+     │
+     ▼
+Grafana
+
+Prometheus repeatedly pull numeric metrics.
+Tracing Path
+Client Request
+      │
+      ▼
+Gateway
+      │
+      ▼
+Order Service
+      │
+      ▼
+Payment Service
+      │
+      ▼
+Micrometer Tracing
+      │
+      ▼
+Zipkin
+
+Each request generates spans that Zipkin stores and visualizes.
+
+# Modern Spring Boot Architecture
+
+                    Spring Boot
+                         │
+          ┌──────────────┴──────────────┐
+          │                             │
+          ▼                             ▼
+  Micrometer Metrics           Micrometer Tracing
+          │                             │
+          ▼                             ▼
+    /actuator/prometheus            Trace Spans
+          │                             │
+          ▼                             ▼
+     Prometheus                     Zipkin
+          │
+          ▼
+       Grafana
+	   
+Notice that Micrometer is involved in both paths, but it sends different data to different systems.
+
+Interview Scenario
+
+Question: How do you monitor a Spring Boot microservice in production?
+
+A good answer:
+
+I use Spring Boot Actuator with Micrometer. Micrometer collects JVM metrics, HTTP request metrics, 
+database metrics, and custom business metrics. It exports them to Prometheus, and Grafana provides dashboards 
+and alerts. I also create custom counters and timers for important business operations such as order creation 
+and payment processing.
+
+Why does Micrometer connect to Prometheus instead of Zipkin?
+
+A good answer is:
+
+Micrometer produces different types of telemetry. Metrics (such as CPU usage, memory usage, request count, and response time) 
+are exposed to Prometheus because Prometheus is a time-series metrics database designed to scrape and store numerical measurements.
+ Tracing data (individual request flows across microservices) is produced through Micrometer Tracing and sent to Zipkin
+ because Zipkin is designed to store and visualize distributed traces. Metrics and traces serve different purposes and use
+ different data models.
+
+A simple memory trick
+Prometheus asks: "How is the service doing overall?" (metrics)
+Zipkin asks: "What happened to this specific request?" (traces)
+
+
+# Setup the Micrometer with ZipKin 
+
+    - Setup Zipkin : go to zipkin website and download the zipkin 
+	                curl -sSL https://zipkin.io/quickstart.sh |bash -s 
+					java -jar zipkin.jar 
+					then verify it 
+					http://localhost:9411/zipkin/
+	- SetUp Micrometer : 
+	                     1. Add Micrometer Maven Dependencies to our microservices Projects 
+						 <dependency> 
+						      <groupId>io.micrometer</groupId>
+							  <artifactId>micrometer-observation</artifactId>
+						 </dependency>
+						 <dependency> 
+						      <groupId>io.micrometer</groupId>
+							  <artifactId>micrometer-tracing-bridge-brave</artifactId>
+						 </dependency>
+						  <dependency> 
+						      <groupId>io.zipkin.reporter2</groupId>
+							  <artifactId>zipkin-reporter-brave/artifactId>
+						 </dependency>
+                        2. Add Spring boot Actuator Dependency 
+                                 <dependency> 
+						      <groupId>org.springframework.boot</groupId>
+							  <artifactId>spring-boot-starter-actuator</artifactId>
+						        </dependency>
+						 
+						3. Configure Tracing Sampling Probability ( Application.properties in microservices , Config-server in github , global configuratin )
+						      # zipking config 
+							  management.tracing.sampling.Probability=1.0 
+							  spring.zipking.baseUrl: http://localhost:9411 
+						
+						4. Tracing HTTP Request Sent with Feign  
+						       <dependency> 
+						      <groupId>io.github.openfeign</groupId>
+							  <artifactId>feign-micrometer</artifactId>
+						        </dependency>
+						
+						5. MicrometerCapability bean  ( config: AppConfig )
+						 @bean 
+						 public Capability capability(final MeterRegistry registry)
+						 return new MicrometerCapability (registry);
+
+
+ Once hit the API then go and check the zipkin how it is showing 
+
+ <img width="1856" height="569" alt="image" src="https://github.com/user-attachments/assets/de7b3a7d-4f88-44ed-998d-bdf8250c6775" />
+
+
+ <img width="1671" height="674" alt="image" src="https://github.com/user-attachments/assets/b30ff8e3-44aa-455c-bea0-1e7d04812712" />
+
+
+
+
+
+
+# Centralized Logging with ELK stack 
